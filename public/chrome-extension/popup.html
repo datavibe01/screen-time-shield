@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Time Tracker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>Focus Tracker</span>
+      </div>
+      <div class="current-site" id="currentSite">-</div>
+    </div>
+
+    <!-- Total Time Display -->
+    <div class="total-time-card">
+      <div class="time-label">Today's Screen Time</div>
+      <div class="time-display" id="totalTime">0h 0m</div>
+      <div class="time-progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="sitesVisited">0</div>
+        <div class="stat-label">Sites Visited</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="avgPerSite">0m</div>
+        <div class="stat-label">Avg per Site</div>
+      </div>
+    </div>
+
+    <!-- Top Sites -->
+    <div class="section">
+      <div class="section-header">
+        <span>Top Sites Today</span>
+      </div>
+      <div class="sites-list" id="sitesList">
+        <div class="empty-state">No data yet. Start browsing!</div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="section">
+      <div class="section-header">
+        <span>Reminder Settings</span>
+      </div>
+      
+      <div class="setting-row">
+        <label>Remind every:</label>
+        <select id="reminderInterval">
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div class="setting-row custom-interval" id="customIntervalRow" style="display: none;">
+        <label>Custom (minutes):</label>
+        <input type="number" id="customInterval" min="1" max="180" placeholder="Enter minutes">
+      </div>
+
+      <div class="setting-row">
+        <label>
+          <input type="checkbox" id="enableNotifications" checked>
+          Show notifications
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label>
+          <input type="checkbox" id="enablePageInterrupt" checked>
+          Show page overlay
+        </label>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-secondary" id="resetBtn">Reset Today</button>
+      <button class="btn btn-primary" id="saveBtn">Save Settings</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
