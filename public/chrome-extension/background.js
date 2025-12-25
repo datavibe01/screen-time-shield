@@ -20,6 +20,8 @@ chrome.runtime.onInstalled.addListener(() => {
     settings: DEFAULT_SETTINGS,
     todayStats: {},
     totalTimeToday: 0,
+    hourlyData: {},
+    remindersCount: 0,
     lastResetDate: new Date().toDateString()
   });
   updateBadge(0);
@@ -83,14 +85,16 @@ function getElapsedSeconds() {
 }
 
 async function saveTimeForSite(hostname, seconds) {
-  const data = await chrome.storage.local.get(['todayStats', 'totalTimeToday', 'lastResetDate']);
+  const data = await chrome.storage.local.get(['todayStats', 'totalTimeToday', 'hourlyData', 'lastResetDate']);
   
   // Reset if new day
   const today = new Date().toDateString();
   if (data.lastResetDate !== today) {
     data.todayStats = {};
     data.totalTimeToday = 0;
+    data.hourlyData = {};
     data.lastResetDate = today;
+    await chrome.storage.local.set({ remindersCount: 0 });
   }
 
   // Update stats
@@ -98,9 +102,15 @@ async function saveTimeForSite(hostname, seconds) {
   stats[hostname] = (stats[hostname] || 0) + seconds;
   const totalTime = (data.totalTimeToday || 0) + seconds;
 
+  // Update hourly data
+  const currentHour = new Date().getHours();
+  const hourlyData = data.hourlyData || {};
+  hourlyData[currentHour] = (hourlyData[currentHour] || 0) + seconds;
+
   await chrome.storage.local.set({
     todayStats: stats,
     totalTimeToday: totalTime,
+    hourlyData: hourlyData,
     lastResetDate: today
   });
 
@@ -134,7 +144,7 @@ function updateBadge(seconds) {
 }
 
 async function checkReminder(totalSeconds) {
-  const data = await chrome.storage.local.get(['settings', 'lastReminderTime']);
+  const data = await chrome.storage.local.get(['settings', 'lastReminderTime', 'remindersCount']);
   const settings = data.settings || DEFAULT_SETTINGS;
   const interval = (settings.customInterval || settings.reminderInterval) * 60; // Convert to seconds
   
@@ -142,7 +152,11 @@ async function checkReminder(totalSeconds) {
   const timeSinceReminder = totalSeconds - lastReminder;
 
   if (timeSinceReminder >= interval) {
-    await chrome.storage.local.set({ lastReminderTime: totalSeconds });
+    const newRemindersCount = (data.remindersCount || 0) + 1;
+    await chrome.storage.local.set({ 
+      lastReminderTime: totalSeconds,
+      remindersCount: newRemindersCount
+    });
     
     // Send notification
     if (settings.enableNotifications) {
@@ -185,10 +199,10 @@ setInterval(async () => {
   }
 }, 1000);
 
-// Listen for messages from popup
+// Listen for messages from popup/dashboard
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_STATS') {
-    chrome.storage.local.get(['todayStats', 'totalTimeToday', 'settings']).then(data => {
+    chrome.storage.local.get(['todayStats', 'totalTimeToday', 'settings', 'hourlyData', 'remindersCount']).then(data => {
       const currentTotal = isTracking 
         ? (data.totalTimeToday || 0) + getElapsedSeconds()
         : (data.totalTimeToday || 0);
@@ -197,7 +211,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         stats: data.todayStats || {},
         totalTime: currentTotal,
         settings: data.settings || DEFAULT_SETTINGS,
-        currentSite: activeUrl
+        currentSite: activeUrl,
+        hourlyData: data.hourlyData || {},
+        remindersCount: data.remindersCount || 0
       });
     });
     return true;
@@ -214,11 +230,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.set({
       todayStats: {},
       totalTimeToday: 0,
+      hourlyData: {},
+      remindersCount: 0,
       lastReminderTime: 0
     }).then(() => {
       totalSeconds = 0;
       updateBadge(0);
       sendResponse({ success: true });
+    });
+    return true;
+  }
+
+  if (message.type === 'RESET_ALL') {
+    chrome.storage.local.clear().then(() => {
+      chrome.storage.local.set({
+        settings: DEFAULT_SETTINGS,
+        todayStats: {},
+        totalTimeToday: 0,
+        hourlyData: {},
+        remindersCount: 0,
+        lastResetDate: new Date().toDateString()
+      }).then(() => {
+        totalSeconds = 0;
+        updateBadge(0);
+        sendResponse({ success: true });
+      });
     });
     return true;
   }
