@@ -12,6 +12,7 @@ const enableNotificationsEl = document.getElementById('enableNotifications');
 const enablePageInterruptEl = document.getElementById('enablePageInterrupt');
 const saveBtn = document.getElementById('saveBtn');
 const resetBtn = document.getElementById('resetBtn');
+const dashboardBtn = document.getElementById('dashboardBtn');
 
 // Format time helper
 function formatTime(seconds) {
@@ -136,6 +137,11 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 300);
   }, 2000);
 }
+
+// Open dashboard
+dashboardBtn.addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+});
 
 // Initial load
 loadStats();

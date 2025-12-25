@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Time Tracker - Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12,6 12,12 16,14"/>
+          </svg>
+          <span>Focus Time Tracker</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="date" id="currentDate"></span>
+        <button class="btn btn-secondary" id="exportBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7,10 12,15 17,10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Export Data
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Stats Cards -->
+    <section class="stats-overview">
+      <div class="stat-card primary">
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12,6 12,12 16,14"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="totalTimeToday">0h 0m</span>
+          <span class="stat-label">Total Time Today</span>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-bar" id="dailyProgress"></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="sitesVisited">0</span>
+          <span class="stat-label">Sites Visited</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20V10"/>
+            <path d="M18 20V4"/>
+            <path d="M6 20v-4"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="avgPerSite">0m</span>
+          <span class="stat-label">Avg Per Site</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="remindersShown">0</span>
+          <span class="stat-label">Reminders Today</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <!-- Time Distribution Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Time Distribution by Site</h3>
+          <div class="chart-legend" id="chartLegend"></div>
+        </div>
+        <div class="chart-container">
+          <div class="pie-chart" id="pieChart"></div>
+          <div class="chart-details" id="chartDetails"></div>
+        </div>
+      </div>
+
+      <!-- Hourly Activity -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Hourly Activity</h3>
+        </div>
+        <div class="bar-chart" id="hourlyChart"></div>
+        <div class="bar-labels" id="hourlyLabels"></div>
+      </div>
+    </section>
+
+    <!-- All Sites Table -->
+    <section class="sites-section">
+      <div class="section-header">
+        <h3>All Visited Sites</h3>
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search sites...">
+        </div>
+      </div>
+      <div class="sites-table">
+        <div class="table-header">
+          <span class="col-rank">#</span>
+          <span class="col-site">Website</span>
+          <span class="col-time">Time Spent</span>
+          <span class="col-percent">% of Total</span>
+          <span class="col-bar">Distribution</span>
+        </div>
+        <div class="table-body" id="sitesTableBody"></div>
+      </div>
+    </section>
+
+    <!-- Settings Section -->
+    <section class="settings-section">
+      <div class="section-header">
+        <h3>Settings</h3>
+      </div>
+      <div class="settings-grid">
+        <div class="setting-card">
+          <label>Reminder Interval</label>
+          <select id="reminderInterval">
+            <option value="15">Every 15 minutes</option>
+            <option value="30">Every 30 minutes</option>
+            <option value="45">Every 45 minutes</option>
+            <option value="60">Every 60 minutes</option>
+            <option value="custom">Custom</option>
+          </select>
+          <div class="custom-interval" id="customIntervalRow" style="display: none;">
+            <input type="number" id="customInterval" min="1" max="120" placeholder="Minutes">
+            <span>minutes</span>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <label>Notifications</label>
+          <div class="toggle-row">
+            <span>Browser Notifications</span>
+            <label class="switch">
+              <input type="checkbox" id="enableNotifications" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span>Page Overlay Interrupt</span>
+            <label class="switch">
+              <input type="checkbox" id="enablePageInterrupt" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <label>Actions</label>
+          <div class="action-buttons">
+            <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+            <button class="btn btn-danger" id="resetTodayBtn">Reset Today</button>
+            <button class="btn btn-secondary" id="resetAllBtn">Reset All Data</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
