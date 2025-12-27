@@ -106,11 +106,16 @@ function loadStats() {
   });
 }
 
-// Render pie chart
+// Store pie chart segment data for hover
+let pieSegments = [];
+
+// Render pie chart with hover support
 function renderPieChart(stats, totalTime) {
   const sortedSites = Object.entries(stats)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
+
+  pieSegments = []; // Reset segments
 
   if (sortedSites.length === 0) {
     pieChartEl.style.background = '#334155';
@@ -130,6 +135,16 @@ function renderPieChart(stats, totalTime) {
     const color = chartColors[index % chartColors.length];
     const startAngle = currentAngle;
     currentAngle += percent * 3.6; // Convert to degrees
+
+    // Store segment data for hover
+    pieSegments.push({
+      site,
+      time,
+      percent,
+      color,
+      startAngle,
+      endAngle: currentAngle
+    });
 
     gradientParts.push(`${color} ${startAngle}deg ${currentAngle}deg`);
 
@@ -157,6 +172,16 @@ function renderPieChart(stats, totalTime) {
   if (otherSites.length > 0) {
     const otherTime = otherSites.reduce((acc, [_, time]) => acc + time, 0);
     const otherPercent = totalTime > 0 ? (otherTime / totalTime) * 100 : 0;
+    
+    pieSegments.push({
+      site: `Other (${otherSites.length} sites)`,
+      time: otherTime,
+      percent: otherPercent,
+      color: '#475569',
+      startAngle: currentAngle,
+      endAngle: 360
+    });
+    
     gradientParts.push(`#475569 ${currentAngle}deg 360deg`);
     
     detailsHtml += `
@@ -175,6 +200,56 @@ function renderPieChart(stats, totalTime) {
   chartDetailsEl.innerHTML = detailsHtml;
   chartLegendEl.innerHTML = legendHtml;
 }
+
+// Pie chart hover tooltip
+const pieTooltip = document.createElement('div');
+pieTooltip.className = 'pie-tooltip';
+pieTooltip.style.cssText = 'position: fixed; display: none; background: #0f172a; border: 1px solid #334155; padding: 12px 16px; border-radius: 8px; pointer-events: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+document.body.appendChild(pieTooltip);
+
+pieChartEl.addEventListener('mousemove', (e) => {
+  const rect = pieChartEl.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const x = e.clientX - centerX;
+  const y = e.clientY - centerY;
+  
+  // Check if within donut (not in center hole)
+  const distance = Math.sqrt(x * x + y * y);
+  const outerRadius = rect.width / 2;
+  const innerRadius = outerRadius / 2;
+  
+  if (distance < innerRadius || distance > outerRadius) {
+    pieTooltip.style.display = 'none';
+    return;
+  }
+  
+  // Calculate angle (0 at top, clockwise)
+  let angle = Math.atan2(x, -y) * (180 / Math.PI);
+  if (angle < 0) angle += 360;
+  
+  // Find which segment
+  const segment = pieSegments.find(s => angle >= s.startAngle && angle < s.endAngle);
+  
+  if (segment) {
+    pieTooltip.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+        <div style="width: 12px; height: 12px; border-radius: 3px; background: ${segment.color};"></div>
+        <strong style="color: #f1f5f9;">${segment.site}</strong>
+      </div>
+      <div style="color: #10b981; font-size: 14px;">${formatMinutes(segment.time)} (${segment.percent.toFixed(1)}%)</div>
+    `;
+    pieTooltip.style.display = 'block';
+    pieTooltip.style.left = (e.clientX + 15) + 'px';
+    pieTooltip.style.top = (e.clientY + 15) + 'px';
+  } else {
+    pieTooltip.style.display = 'none';
+  }
+});
+
+pieChartEl.addEventListener('mouseleave', () => {
+  pieTooltip.style.display = 'none';
+});
 
 // Render hourly chart
 function renderHourlyChart(hourlyData) {
@@ -262,9 +337,20 @@ reminderIntervalEl.addEventListener('change', () => {
 
 // Save settings
 saveSettingsBtnEl.addEventListener('click', () => {
+  let customValue = null;
+  
+  if (reminderIntervalEl.value === 'custom') {
+    customValue = parseInt(customIntervalEl.value);
+    if (!customValue || customValue < 1 || customValue > 120) {
+      showToast('Please enter a valid custom interval (1-120 minutes)');
+      customIntervalEl.focus();
+      return;
+    }
+  }
+  
   const settings = {
-    reminderInterval: parseInt(reminderIntervalEl.value) || 15,
-    customInterval: reminderIntervalEl.value === 'custom' ? parseInt(customIntervalEl.value) : null,
+    reminderInterval: reminderIntervalEl.value === 'custom' ? customValue : parseInt(reminderIntervalEl.value),
+    customInterval: customValue,
     enableNotifications: enableNotificationsEl.checked,
     enablePageInterrupt: enablePageInterruptEl.checked
   };

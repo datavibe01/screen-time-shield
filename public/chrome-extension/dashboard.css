@@ -491,6 +491,97 @@ body {
   transition: width 0.3s ease;
 }
 
+/* Ads Section */
+.ads-section {
+  margin-bottom: 32px;
+}
+
+.ads-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.ad-card {
+  background: #1e293b;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid transparent;
+}
+
+.ad-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: #334155;
+}
+
+.ad-card.ad-featured {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #10b981;
+}
+
+.ad-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ad-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ad-icon {
+  font-size: 36px;
+}
+
+.ad-card h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.ad-card p {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.ad-cta {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #10b981;
+  text-decoration: none;
+  margin-top: 8px;
+  transition: color 0.2s;
+}
+
+.ad-cta:hover {
+  color: #34d399;
+}
+
+.ads-disclosure {
+  text-align: center;
+  font-size: 12px;
+  color: #475569;
+  margin-top: 16px;
+}
+
 /* Settings Section */
 .settings-section {
   background: #1e293b;
@@ -651,6 +742,10 @@ input:checked + .slider::before {
     grid-template-columns: 1fr;
   }
   
+  .ads-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
   .table-header,
   .table-row {
     grid-template-columns: 40px 1fr 100px 80px;
@@ -683,6 +778,10 @@ input:checked + .slider::before {
   .pie-chart {
     width: 160px;
     height: 160px;
+  }
+  
+  .ads-container {
+    grid-template-columns: 1fr;
   }
   
   .table-header,

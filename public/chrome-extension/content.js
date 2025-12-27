@@ -1,31 +1,36 @@
-// Content script for page overlay reminders
+// Content script for full-screen dark overlay reminders
 
 let overlayVisible = false;
 
 // Listen for reminder messages from background
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'SHOW_REMINDER') {
-    showReminderOverlay(message.formattedTime);
+    showReminderOverlay(message.formattedTime, message.intervalMinutes);
   }
 });
 
-function showReminderOverlay(timeSpent) {
+function showReminderOverlay(timeSpent, intervalMinutes) {
   if (overlayVisible) return;
   overlayVisible = true;
 
-  // Create overlay
+  // Create full-screen dark overlay
   const overlay = document.createElement('div');
   overlay.id = 'focus-tracker-overlay';
   overlay.innerHTML = `
-    <div class="focus-tracker-modal">
-      <div class="focus-tracker-icon">⏰</div>
-      <h2>Time Check!</h2>
-      <p>You've been browsing for <strong>${timeSpent}</strong></p>
-      <p class="focus-tracker-subtitle">Consider taking a short break to rest your eyes and stretch.</p>
-      <div class="focus-tracker-buttons">
-        <button class="focus-tracker-btn focus-tracker-btn-break">Take a Break</button>
-        <button class="focus-tracker-btn focus-tracker-btn-continue">Continue Browsing</button>
+    <div class="focus-tracker-fullscreen">
+      <div class="focus-tracker-time-icon">⏰</div>
+      <h1 class="focus-tracker-main-text">${intervalMinutes || 15} Minutes Ended</h1>
+      <p class="focus-tracker-sub-text">You've been browsing for <strong>${timeSpent}</strong></p>
+      <p class="focus-tracker-hint">Take a break to rest your eyes and stretch</p>
+      <div class="focus-tracker-actions">
+        <button class="focus-tracker-btn focus-tracker-btn-break">
+          <span>🧘</span> Take a Break
+        </button>
+        <button class="focus-tracker-btn focus-tracker-btn-continue">
+          <span>→</span> Continue Browsing
+        </button>
       </div>
+      <p class="focus-tracker-dismiss-hint">Press ESC or click anywhere to dismiss</p>
     </div>
   `;
 
@@ -42,7 +47,6 @@ function showReminderOverlay(timeSpent) {
 
   breakBtn.addEventListener('click', () => {
     closeOverlay(overlay);
-    // Open a relaxing break page
     window.open('https://www.calm.com/breathe', '_blank');
   });
 
