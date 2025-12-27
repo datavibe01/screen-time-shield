@@ -5,6 +5,7 @@ let activeUrl = null;
 let startTime = null;
 let totalSeconds = 0;
 let isTracking = false;
+let sessionStarted = false;
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -14,18 +15,37 @@ const DEFAULT_SETTINGS = {
   enablePageInterrupt: true
 };
 
-// Initialize extension
+// Initialize extension on install
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({
-    settings: DEFAULT_SETTINGS,
+  initializeSession();
+});
+
+// Reset session time on Chrome startup (but keep lifetime totals)
+chrome.runtime.onStartup.addListener(() => {
+  initializeSession();
+});
+
+// Initialize/reset session while preserving lifetime data
+async function initializeSession() {
+  const data = await chrome.storage.local.get(['lifetimeStats', 'settings']);
+  
+  // Preserve lifetime stats, reset session stats
+  await chrome.storage.local.set({
+    settings: data.settings || DEFAULT_SETTINGS,
     todayStats: {},
     totalTimeToday: 0,
+    sessionTimeToday: 0,
     hourlyData: {},
     remindersCount: 0,
-    lastResetDate: new Date().toDateString()
+    lastResetDate: new Date().toDateString(),
+    lastReminderTime: 0,
+    lifetimeStats: data.lifetimeStats || {}
   });
+  
+  totalSeconds = 0;
+  sessionStarted = true;
   updateBadge(0);
-});
+}
 
 // Track active tab changes
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
@@ -85,7 +105,7 @@ function getElapsedSeconds() {
 }
 
 async function saveTimeForSite(hostname, seconds) {
-  const data = await chrome.storage.local.get(['todayStats', 'totalTimeToday', 'hourlyData', 'lastResetDate']);
+  const data = await chrome.storage.local.get(['todayStats', 'totalTimeToday', 'hourlyData', 'lastResetDate', 'lifetimeStats']);
   
   // Reset if new day
   const today = new Date().toDateString();
@@ -94,13 +114,17 @@ async function saveTimeForSite(hostname, seconds) {
     data.totalTimeToday = 0;
     data.hourlyData = {};
     data.lastResetDate = today;
-    await chrome.storage.local.set({ remindersCount: 0 });
+    await chrome.storage.local.set({ remindersCount: 0, lastReminderTime: 0 });
   }
 
-  // Update stats
+  // Update session stats
   const stats = data.todayStats || {};
   stats[hostname] = (stats[hostname] || 0) + seconds;
   const totalTime = (data.totalTimeToday || 0) + seconds;
+
+  // Update lifetime stats (never resets unless manually)
+  const lifetimeStats = data.lifetimeStats || {};
+  lifetimeStats[hostname] = (lifetimeStats[hostname] || 0) + seconds;
 
   // Update hourly data
   const currentHour = new Date().getHours();
@@ -111,7 +135,8 @@ async function saveTimeForSite(hostname, seconds) {
     todayStats: stats,
     totalTimeToday: totalTime,
     hourlyData: hourlyData,
-    lastResetDate: today
+    lastResetDate: today,
+    lifetimeStats: lifetimeStats
   });
 
   totalSeconds = totalTime;
@@ -174,7 +199,8 @@ async function checkReminder(totalSeconds) {
       chrome.tabs.sendMessage(activeTabId, {
         type: 'SHOW_REMINDER',
         totalTime: totalSeconds,
-        formattedTime: formatTime(totalSeconds)
+        formattedTime: formatTime(totalSeconds),
+        intervalMinutes: settings.customInterval || settings.reminderInterval
       }).catch(() => {});
     }
   }
@@ -202,14 +228,19 @@ setInterval(async () => {
 // Listen for messages from popup/dashboard
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_STATS') {
-    chrome.storage.local.get(['todayStats', 'totalTimeToday', 'settings', 'hourlyData', 'remindersCount']).then(data => {
+    chrome.storage.local.get(['todayStats', 'totalTimeToday', 'settings', 'hourlyData', 'remindersCount', 'lifetimeStats']).then(data => {
       const currentTotal = isTracking 
         ? (data.totalTimeToday || 0) + getElapsedSeconds()
         : (data.totalTimeToday || 0);
       
+      // Calculate lifetime total
+      const lifetimeTotal = Object.values(data.lifetimeStats || {}).reduce((a, b) => a + b, 0);
+      
       sendResponse({
         stats: data.todayStats || {},
         totalTime: currentTotal,
+        lifetimeStats: data.lifetimeStats || {},
+        lifetimeTotal: lifetimeTotal,
         settings: data.settings || DEFAULT_SETTINGS,
         currentSite: activeUrl,
         hourlyData: data.hourlyData || {},
