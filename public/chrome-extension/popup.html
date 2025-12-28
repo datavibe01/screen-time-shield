@@ -82,7 +82,10 @@
 
       <div class="setting-row custom-interval" id="customIntervalRow" style="display: none;">
         <label>Custom (minutes):</label>
-        <input type="number" id="customInterval" min="1" max="180" placeholder="Enter minutes">
+        <div class="custom-interval-controls">
+          <input type="number" id="customInterval" min="1" max="180" placeholder="Enter minutes">
+          <button type="button" class="btn btn-secondary btn-inline" id="applyCustomBtn">Apply</button>
+        </div>
       </div>
 
       <div class="setting-row">

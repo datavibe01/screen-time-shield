@@ -238,12 +238,25 @@ function formatTime(seconds) {
   return `${minutes} minutes`;
 }
 
-// Update badge every second
+// Persist time & update badge/reminders continuously while browsing
+let tickInProgress = false;
 setInterval(async () => {
-  if (isTracking) {
-    const data = await chrome.storage.local.get(['totalTimeToday']);
-    const currentTotal = (data.totalTimeToday || 0) + getElapsedSeconds();
-    updateBadge(currentTotal);
+  if (!isTracking || !activeUrl || !startTime) return;
+  if (tickInProgress) return;
+
+  tickInProgress = true;
+  try {
+    const hostname = activeUrl;
+    const elapsed = getElapsedSeconds();
+
+    // Only persist when at least 1 second has passed
+    if (elapsed > 0) {
+      await saveTimeForSite(hostname, elapsed);
+      // Reset start time so we don't double-count on the next tick
+      startTime = Date.now();
+    }
+  } finally {
+    tickInProgress = false;
   }
 }, 1000);
 
@@ -273,11 +286,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   if (message.type === 'UPDATE_SETTINGS') {
-    chrome.storage.local.set({ settings: message.settings }).then(() => {
+    // Save settings and restart reminder timing from “now” (so new intervals take effect immediately)
+    chrome.storage.local.get(['totalTimeToday']).then(data => {
+      const currentTotal = isTracking
+        ? (data.totalTimeToday || 0) + getElapsedSeconds()
+        : (data.totalTimeToday || 0);
+
+      return chrome.storage.local.set({
+        settings: message.settings,
+        lastReminderTime: currentTotal
+      });
+    }).then(() => {
       sendResponse({ success: true });
     });
     return true;
   }
+
 
   if (message.type === 'RESET_TODAY') {
     chrome.storage.local.set({

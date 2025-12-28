@@ -8,6 +8,7 @@ const currentSiteEl = document.getElementById('currentSite');
 const reminderIntervalEl = document.getElementById('reminderInterval');
 const customIntervalRowEl = document.getElementById('customIntervalRow');
 const customIntervalEl = document.getElementById('customInterval');
+const applyCustomBtn = document.getElementById('applyCustomBtn');
 const enableNotificationsEl = document.getElementById('enableNotifications');
 const enablePageInterruptEl = document.getElementById('enablePageInterrupt');
 const saveBtn = document.getElementById('saveBtn');
@@ -17,6 +18,7 @@ const dashboardBtn = document.getElementById('dashboardBtn');
 // Store current settings to prevent reload overwrites
 let currentSettings = null;
 let settingsLoaded = false;
+let userEditing = false;
 
 // Format time helper
 function formatTime(seconds) {
@@ -75,20 +77,24 @@ function loadStats() {
       sitesListEl.innerHTML = '<div class="empty-state">No data yet. Start browsing!</div>';
     }
 
-    // Only load settings once on initial load (prevent overwriting user changes)
-    if (!settingsLoaded && settings) {
+    // Keep controls in sync with saved settings unless the user is editing
+    if (settings) {
       currentSettings = settings;
-      
-      if (settings.customInterval) {
-        reminderIntervalEl.value = 'custom';
-        customIntervalEl.value = settings.customInterval;
-        customIntervalRowEl.style.display = 'flex';
-      } else {
-        reminderIntervalEl.value = settings.reminderInterval.toString();
-        customIntervalRowEl.style.display = 'none';
+
+      if (!userEditing) {
+        if (settings.customInterval) {
+          reminderIntervalEl.value = 'custom';
+          customIntervalEl.value = settings.customInterval;
+          customIntervalRowEl.style.display = 'flex';
+        } else {
+          reminderIntervalEl.value = settings.reminderInterval.toString();
+          customIntervalRowEl.style.display = 'none';
+        }
+
+        enableNotificationsEl.checked = !!settings.enableNotifications;
+        enablePageInterruptEl.checked = !!settings.enablePageInterrupt;
       }
-      enableNotificationsEl.checked = settings.enableNotifications;
-      enablePageInterruptEl.checked = settings.enablePageInterrupt;
+
       settingsLoaded = true;
     }
   });
@@ -96,12 +102,45 @@ function loadStats() {
 
 // Handle reminder interval change
 reminderIntervalEl.addEventListener('change', () => {
+  userEditing = true;
+
   if (reminderIntervalEl.value === 'custom') {
     customIntervalRowEl.style.display = 'flex';
     customIntervalEl.focus();
   } else {
     customIntervalRowEl.style.display = 'none';
     customIntervalEl.value = '';
+  }
+});
+
+// Mark that the user is editing so auto-refresh doesn't snap values back
+customIntervalEl.addEventListener('input', () => {
+  userEditing = true;
+});
+
+enableNotificationsEl.addEventListener('change', () => {
+  userEditing = true;
+});
+
+enablePageInterruptEl.addEventListener('change', () => {
+  userEditing = true;
+});
+
+if (applyCustomBtn) {
+  applyCustomBtn.addEventListener('click', () => {
+    userEditing = true;
+    reminderIntervalEl.value = 'custom';
+    customIntervalRowEl.style.display = 'flex';
+    saveBtn.click();
+  });
+}
+
+customIntervalEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    userEditing = true;
+    reminderIntervalEl.value = 'custom';
+    customIntervalRowEl.style.display = 'flex';
+    saveBtn.click();
   }
 });
 

@@ -258,6 +258,19 @@ body {
   margin-top: 4px;
 }
 
+.custom-interval-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn.btn-inline {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
 /* Actions */
 .actions {
   display: flex;
