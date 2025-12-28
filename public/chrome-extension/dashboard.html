@@ -135,7 +135,7 @@
           <span class="col-site">Website</span>
           <span class="col-time">Time Spent</span>
           <span class="col-percent">% of Total</span>
-          <span class="col-bar">Distribution</span>
+          <span class="col-bar col-bar-header">Distribution</span>
         </div>
         <div class="table-body" id="sitesTableBody"></div>
       </div>
@@ -200,8 +200,9 @@
             <option value="custom">Custom</option>
           </select>
           <div class="custom-interval" id="customIntervalRow" style="display: none;">
-            <input type="number" id="customInterval" min="1" max="120" placeholder="Minutes">
+            <input type="number" id="customInterval" min="1" max="120" placeholder="Minutes (1-120)">
             <span>minutes</span>
+            <button class="btn btn-primary btn-sm" id="saveCustomIntervalBtn">Save</button>
           </div>
         </div>
 

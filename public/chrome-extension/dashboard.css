@@ -484,6 +484,11 @@ body {
   overflow: hidden;
 }
 
+.col-bar-header {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
 .col-bar .bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #10b981 0%, #059669 100%);
@@ -491,9 +496,20 @@ body {
   transition: width 0.3s ease;
 }
 
-/* Ads Section */
+/* Ads Section - Highlighted Sponsor */
 .ads-section {
   margin-bottom: 32px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.ads-section .section-header h3 {
+  color: #a5b4fc;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .ads-container {
@@ -503,23 +519,23 @@ body {
 }
 
 .ad-card {
-  background: #1e293b;
+  background: rgba(30, 41, 59, 0.8);
   border-radius: 16px;
   padding: 24px;
   position: relative;
   transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid transparent;
+  border: 1px solid rgba(99, 102, 241, 0.15);
 }
 
 .ad-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  border-color: #334155;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 .ad-card.ad-featured {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  border: 1px solid #10b981;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.5);
 }
 
 .ad-badge {
@@ -641,6 +657,11 @@ body {
 .custom-interval span {
   color: #64748b;
   font-size: 14px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
 }
 
 .toggle-row {
