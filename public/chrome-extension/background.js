@@ -17,34 +17,56 @@ const DEFAULT_SETTINGS = {
 
 // Initialize extension on install
 chrome.runtime.onInstalled.addListener(() => {
-  initializeSession();
+  initializeStorage();
 });
 
-// Reset session time on Chrome startup (but keep lifetime totals)
+// On Chrome startup - just continue tracking (no reset)
 chrome.runtime.onStartup.addListener(() => {
-  initializeSession();
+  checkDayReset();
 });
 
-// Initialize/reset session while preserving lifetime data
-async function initializeSession() {
-  const data = await chrome.storage.local.get(['lifetimeStats', 'settings']);
+// Initialize storage (only on install)
+async function initializeStorage() {
+  const data = await chrome.storage.local.get(['settings', 'todayStats', 'totalTimeToday', 'lastResetDate']);
   
-  // Preserve lifetime stats, reset session stats
+  // Only set defaults if not already set
   await chrome.storage.local.set({
     settings: data.settings || DEFAULT_SETTINGS,
-    todayStats: {},
-    totalTimeToday: 0,
-    sessionTimeToday: 0,
-    hourlyData: {},
-    remindersCount: 0,
-    lastResetDate: new Date().toDateString(),
-    lastReminderTime: 0,
+    todayStats: data.todayStats || {},
+    totalTimeToday: data.totalTimeToday || 0,
+    hourlyData: data.hourlyData || {},
+    remindersCount: data.remindersCount || 0,
+    lastResetDate: data.lastResetDate || new Date().toDateString(),
+    lastReminderTime: data.lastReminderTime || 0,
     lifetimeStats: data.lifetimeStats || {}
   });
   
-  totalSeconds = 0;
   sessionStarted = true;
-  updateBadge(0);
+}
+
+// Check if we need to reset for a new day (midnight reset only)
+async function checkDayReset() {
+  const data = await chrome.storage.local.get(['lastResetDate', 'totalTimeToday']);
+  const today = new Date().toDateString();
+  
+  if (data.lastResetDate !== today) {
+    // New day - reset daily stats
+    await chrome.storage.local.set({
+      todayStats: {},
+      totalTimeToday: 0,
+      hourlyData: {},
+      remindersCount: 0,
+      lastReminderTime: 0,
+      lastResetDate: today
+    });
+    totalSeconds = 0;
+    updateBadge(0);
+  } else {
+    // Same day - restore previous total
+    totalSeconds = data.totalTimeToday || 0;
+    updateBadge(totalSeconds);
+  }
+  sessionStarted = true;
 }
 
 // Track active tab changes

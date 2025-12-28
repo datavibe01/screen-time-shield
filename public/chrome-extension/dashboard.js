@@ -251,6 +251,14 @@ pieChartEl.addEventListener('mouseleave', () => {
   pieTooltip.style.display = 'none';
 });
 
+// Format hour to 12-hour AM/PM format
+function formatHourAMPM(hour) {
+  if (hour === 0) return '12 AM';
+  if (hour === 12) return '12 PM';
+  if (hour < 12) return `${hour} AM`;
+  return `${hour - 12} PM`;
+}
+
 // Render hourly chart
 function renderHourlyChart(hourlyData) {
   const hours = [];
@@ -263,7 +271,7 @@ function renderHourlyChart(hourlyData) {
   for (let i = 11; i >= 0; i--) {
     const hour = (currentHour - i + 24) % 24;
     hours.push(hour);
-    labels.push(hour.toString().padStart(2, '0') + ':00');
+    labels.push(formatHourAMPM(hour));
   }
 
   // Find max value for scaling
@@ -325,14 +333,41 @@ searchInputEl.addEventListener('input', (e) => {
   renderSitesTable(globalStats, globalTotalTime, e.target.value);
 });
 
+// Custom interval save button
+const saveCustomIntervalBtnEl = document.getElementById('saveCustomIntervalBtn');
+
 // Reminder interval change handler
 reminderIntervalEl.addEventListener('change', () => {
   if (reminderIntervalEl.value === 'custom') {
     customIntervalRowEl.style.display = 'flex';
+    customIntervalEl.focus();
   } else {
     customIntervalRowEl.style.display = 'none';
     customIntervalEl.value = '';
   }
+});
+
+// Save custom interval button handler
+saveCustomIntervalBtnEl.addEventListener('click', () => {
+  const customValue = parseInt(customIntervalEl.value);
+  if (!customValue || customValue < 1 || customValue > 120) {
+    showToast('Please enter a valid interval (1-120 minutes)');
+    customIntervalEl.focus();
+    return;
+  }
+  
+  const settings = {
+    reminderInterval: customValue,
+    customInterval: customValue,
+    enableNotifications: enableNotificationsEl.checked,
+    enablePageInterrupt: enablePageInterruptEl.checked
+  };
+
+  chrome.runtime.sendMessage({ type: 'UPDATE_SETTINGS', settings }, (response) => {
+    if (response?.success) {
+      showToast(`Custom interval saved: ${customValue} minutes`);
+    }
+  });
 });
 
 // Save settings
