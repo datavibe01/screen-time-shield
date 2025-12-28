@@ -14,6 +14,10 @@ const saveBtn = document.getElementById('saveBtn');
 const resetBtn = document.getElementById('resetBtn');
 const dashboardBtn = document.getElementById('dashboardBtn');
 
+// Store current settings to prevent reload overwrites
+let currentSettings = null;
+let settingsLoaded = false;
+
 // Format time helper
 function formatTime(seconds) {
   const hours = Math.floor(seconds / 3600);
@@ -71,17 +75,21 @@ function loadStats() {
       sitesListEl.innerHTML = '<div class="empty-state">No data yet. Start browsing!</div>';
     }
 
-    // Load settings
-    if (settings) {
+    // Only load settings once on initial load (prevent overwriting user changes)
+    if (!settingsLoaded && settings) {
+      currentSettings = settings;
+      
       if (settings.customInterval) {
         reminderIntervalEl.value = 'custom';
         customIntervalEl.value = settings.customInterval;
         customIntervalRowEl.style.display = 'flex';
       } else {
         reminderIntervalEl.value = settings.reminderInterval.toString();
+        customIntervalRowEl.style.display = 'none';
       }
       enableNotificationsEl.checked = settings.enableNotifications;
       enablePageInterruptEl.checked = settings.enablePageInterrupt;
+      settingsLoaded = true;
     }
   });
 }
@@ -90,6 +98,7 @@ function loadStats() {
 reminderIntervalEl.addEventListener('change', () => {
   if (reminderIntervalEl.value === 'custom') {
     customIntervalRowEl.style.display = 'flex';
+    customIntervalEl.focus();
   } else {
     customIntervalRowEl.style.display = 'none';
     customIntervalEl.value = '';
@@ -98,12 +107,27 @@ reminderIntervalEl.addEventListener('change', () => {
 
 // Save settings
 saveBtn.addEventListener('click', () => {
+  let intervalValue = parseInt(reminderIntervalEl.value);
+  let customValue = null;
+  
+  if (reminderIntervalEl.value === 'custom') {
+    customValue = parseInt(customIntervalEl.value);
+    if (!customValue || customValue < 1 || customValue > 180) {
+      showToast('Enter a valid custom time (1-180 min)');
+      customIntervalEl.focus();
+      return;
+    }
+    intervalValue = customValue;
+  }
+
   const settings = {
-    reminderInterval: parseInt(reminderIntervalEl.value) || 15,
-    customInterval: reminderIntervalEl.value === 'custom' ? parseInt(customIntervalEl.value) : null,
+    reminderInterval: intervalValue,
+    customInterval: customValue,
     enableNotifications: enableNotificationsEl.checked,
     enablePageInterrupt: enablePageInterruptEl.checked
   };
+
+  currentSettings = settings;
 
   chrome.runtime.sendMessage({ type: 'UPDATE_SETTINGS', settings }, (response) => {
     if (response?.success) {
@@ -146,5 +170,5 @@ dashboardBtn.addEventListener('click', () => {
 // Initial load
 loadStats();
 
-// Refresh stats every second
+// Refresh stats every second (but not settings)
 setInterval(loadStats, 1000);
